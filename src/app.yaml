@@ -1,0 +1,14 @@
+application: i-am-done
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /prettify
+  static_dir: prettify
+
+- url: /js
+  static_dir: js
+
+- url: /.*
+  script: main.py
