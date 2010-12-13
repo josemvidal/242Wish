@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<ul>
+  {% for class in myClasses %}
+    <li><a href="/{{ class.name }}">{{ class.name }}</a> - {{ class.owner }} 
+     <a title="Delete this class" href="#" class="deletebutton">X</a> 
+     <form style="display:inline" class="deleteform" method="post" action="/%{{ class.name }}">
+     <input style="display:inline" type="submit" value="Delete"/><input type="hidden" name="action" value="delete"/></form>
+</li>
+  {% endfor %} 
+</ul>
+<p>Which class do you want to submit a homework for?</p>
+<ul>
+  {% for class in classes %}
+    <li><a href="/{{ class.name }}">{{ class.name }}</a> - {{ class.owner }}</li>
+  {% endfor %} 
+</ul>
+{% if isTeacher %}
+ <form action="/" method="post">
+ <div>Class Name: <input type="text" name="name" size="16" maxlength="16"></input><em> for example: 145fall10</em></div> 
+ <div><input type="submit" value="Create New Class"></div>
+ </form>
+{% endif %}
+{% endblock %}

@@ -1,4 +1,5 @@
 #turn it in webapp.
+# Jose M Vidal <jmvidal@gmail.com>
 
 from google.appengine.api import users
 from google.appengine.ext import webapp 
@@ -8,7 +9,8 @@ import re
 from datetime import tzinfo, timedelta, datetime #@UnresolvedImport
 #from time import strptime, mktime #@UnresolvedImport
 import urllib 
-
+import os
+from google.appengine.ext.webapp import template
 
 #the list of teachers are the only ones that can create classes and homeworks and see everyone's submissions and grade them
 teachers = ['jmvidal@gmail.com']
@@ -142,69 +144,47 @@ class MainPage(webapp.RequestHandler):
             self.response.out.write(('<html><body><p>You must <a href="%s">login</a> first.</p></body></html>') % (users.create_login_url(self.request.uri)))
             return
         #TODO: all this stuff should be moved to a template
-        self.response.out.write("""<html><head>
-        <link type="text/css" href="/prettify/prettify.css" rel="stylesheet"/>
-        <link type="text/css" href="/js/css/ui-lightness/jquery-ui-1.8.6.custom.css" rel="stylesheet"/>
-        <script type="text/javascript" src="/prettify/prettify.js"></script>
-        <script type="text/javascript" src="/js/jquery-1.4.2.min.js"></script>
-        <script type="text/javascript" src="/js/development-bundle/ui/jquery-ui-1.8.6.custom.js"></script>
-        <script type="text/javascript" src="/js/jquery-ui-timepicker-addon.min.js"></script>
-        <script type="text/javascript" src="/js/scripts.js"></script>
-        </head>""")
-        self.response.out.write('<body onload="prettyPrint()"><div class="userinfo">%s</div>' % userInfo)
+#        self.response.out.write("""<html><head>
+#        <link type="text/css" href="/prettify/prettify.css" rel="stylesheet"/>
+#        <link type="text/css" href="/js/css/ui-lightness/jquery-ui-1.8.6.custom.css" rel="stylesheet"/>
+#        <script type="text/javascript" src="/prettify/prettify.js"></script>
+#        <script type="text/javascript" src="/js/jquery-1.4.2.min.js"></script>
+#        <script type="text/javascript" src="/js/development-bundle/ui/jquery-ui-1.8.6.custom.js"></script>
+#        <script type="text/javascript" src="/js/jquery-ui-timepicker-addon.min.js"></script>
+#        <script type="text/javascript" src="/js/scripts.js"></script>
+#        </head>""")
+#        self.response.out.write('<body onload="prettyPrint()"><div class="userinfo">%s</div>' % userInfo)
+        templateValues ={'userInfo' : userInfo}
         #if at / then show classes 
         pathList = re.split('/',self.request.path) # / => ['',''], /145 => ['','145'], /145/hw1 => ['','145','hw1']
         if (self.request.path == '/'): #at /
-            query = Class.all()
-           # query.filter('owner =', user)
-            if (query.count() > 0):
-                self.response.out.write("<p>Which class do you want to submit a homework for?</p>")
-            self.response.out.write('<ul>')
-            for aClass in query:
-                self.response.out.write('<li><a href="/%s">%s</a> - %s' % (aClass.name, aClass.name, aClass.owner.nickname()))
-                if aClass.owner == user:
-                    self.response.out.write(""" <a title="Delete this class" href="#" class="deletebutton">X</a> 
-                    <form style="display:inline" class="deleteform" method="post" action="/%s">
-                    <input style="display:inline" type="submit" value="Delete"/><input type="hidden" name="action" value="delete"/></form>""" % aClass.name)
-                self.response.out.write('</li>')
-            self.response.out.write('</ul>')
-            if user.email() in teachers:
-                self.response.out.write("""
-                  <form action="/" method="post">
-                    <div>Class Name: <input type="text" name="name" size="16" maxlength="16"></input><em> for example: 145fall10</em></div> 
-                    <div><input type="submit" value="Create New Class"></div>
-                  </form>""")
+            classes = Class.all() #TODO: should these two dbase calls be made just once? 
+            classes.filter('owner !=', user)
+            templateValues['title'] = 'Turn It In'
+            templateValues['classes'] = classes
+            myClasses = Class.all().filter('owner =', user)
+            templateValues['myClasses'] = myClasses
+            templateValues['isTeacher'] = (user.email() in teachers)
+            path = os.path.join(os.path.dirname(__file__), 'index.html')
+            self.response.out.write(template.render(path, templateValues))
+            return           
         #if at /classname then show create-hw button, if teacher. Show list of hw links to everyone.
         elif (len(pathList) == 2):
             className = pathList[1]
-            query = Class.all()
-            query.filter('name =',className)
+            query = Class.all().filter('name =',className)
             if (query.count() < 1):
                 self.response.set_status(404)
                 self.redirect('/')
                 return
             theClass = query.fetch(1)[0]
-            query = Homework.all()
-            query.filter('className =', theClass)
-            self.response.out.write('<h2>%s</h2>' % className)
-            self.response.out.write('<p>Which homework do you want to submit?</p><ul>')
-            for aHw in query:
-                self.response.out.write('<li><a href="/%s/%s">%s: %s</a>'  % (className, aHw.name, aHw.name, aHw.title))
-                if theClass.owner == user:
-                    self.response.out.write(""" <a title="Delete this homework." href="#" class="deletebutton">X</a> 
-                    <form style="display:inline" class="deleteform" method="post" action="/%s/%s">
-                    <input type="submit" value="Delete"/><input type="hidden" name="action" value="delete"/></form>"""
-                     % (className,aHw.name))
-                self.response.out.write('</li>')
-            self.response.out.write('</ul>')
-            if user.email() in teachers and theClass.owner == user: #teacher can create a new homework
-                self.response.out.write("""
-                  <form action="/%s" method="post">
-                    <div>Homework Name: <input type="text" name="name" size="16" maxlength="16"></input><em> ex: 'hw1'. Name will be used in URL for this homework.</em></div>
-                    <div>Homework Title: <input type="text" name="title" size="32" maxlength="32"></input><em> ex: 'For-loops and While-loops'</em></div>
-                    <div>Due Date: <input type="text" name="date" id="date"/></div>
-                    <div><input type="submit" value="Create New Homework"/></div>
-                  </form>""" % (className))           
+            homeworks = Homework.all().filter('className =', theClass)
+            templateValues['title'] = className
+            templateValues['className'] = className
+            templateValues['homeworks'] = homeworks
+            templateValues['isClassTeacher'] = user.email() in teachers and theClass.owner == user
+            path = os.path.join(os.path.dirname(__file__), 'class.html')
+            self.response.out.write(template.render(path, templateValues))
+            return           
         elif len(pathList) == 3: #at /classname/hwx, let user upload file, list user's uploaded files, owner of class sees list of ALL uploaded files
             className = pathList[1]
             hwName = pathList[2]

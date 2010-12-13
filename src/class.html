@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h2>{{ className }}</h2>
+<p>Which homework do you want to submit?</p>
+<ul>
+  {% for hw in homeworks %}
+    <li><a href="/{{ className }}/{{ hw.name }}">{{ hw.name }}: {{ hw.title }}</a>
+    {% if isClassTeacher %}
+    <a title="Delete this homework." href="#" class="deletebutton">X</a> 
+    <form style="display:inline" class="deleteform" method="post" action="/{{ className }}/{{ hw.name }}">
+    <input type="submit" value="Delete"/><input type="hidden" name="action" value="delete"/></form>
+    {% endif %}
+  </li>
+  {% endfor %} 
+</ul>
+{% if isClassTeacher %}
+<form action="/%s" method="post">
+<div>Homework Name: <input type="text" name="name" size="16" maxlength="16"></input><em> ex: 'hw1'. Name will be used in URL for this homework.</em></div>
+<div>Homework Title: <input type="text" name="title" size="32" maxlength="32"></input><em> ex: 'For-loops and While-loops'</em></div>
+<div>Due Date: <input type="text" name="date" id="date"/></div>
+<div><input type="submit" value="Create New Homework"/></div>
+</form>
+{% endif %}
+{% endblock %}
