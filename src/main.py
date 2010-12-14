@@ -35,6 +35,14 @@ class Upload(db.Model):
     file = db.BlobProperty() # the file
     fileName = db.StringProperty()
 
+#used for passing to the templates
+class cleanedUpload:
+    owner = ''
+    fileName = ''
+    file = ''
+    date = ''
+    student = ''
+    
 #Database utility functions    
 def getClassNamed(name):
     query = Class.all()
@@ -143,17 +151,6 @@ class MainPage(webapp.RequestHandler):
         else:
             self.response.out.write(('<html><body><p>You must <a href="%s">login</a> first.</p></body></html>') % (users.create_login_url(self.request.uri)))
             return
-        #TODO: all this stuff should be moved to a template
-#        self.response.out.write("""<html><head>
-#        <link type="text/css" href="/prettify/prettify.css" rel="stylesheet"/>
-#        <link type="text/css" href="/js/css/ui-lightness/jquery-ui-1.8.6.custom.css" rel="stylesheet"/>
-#        <script type="text/javascript" src="/prettify/prettify.js"></script>
-#        <script type="text/javascript" src="/js/jquery-1.4.2.min.js"></script>
-#        <script type="text/javascript" src="/js/development-bundle/ui/jquery-ui-1.8.6.custom.js"></script>
-#        <script type="text/javascript" src="/js/jquery-ui-timepicker-addon.min.js"></script>
-#        <script type="text/javascript" src="/js/scripts.js"></script>
-#        </head>""")
-#        self.response.out.write('<body onload="prettyPrint()"><div class="userinfo">%s</div>' % userInfo)
         templateValues ={'userInfo' : userInfo}
         #if at / then show classes 
         pathList = re.split('/',self.request.path) # / => ['',''], /145 => ['','145'], /145/hw1 => ['','145','hw1']
@@ -196,41 +193,52 @@ class MainPage(webapp.RequestHandler):
                 self.redirect('/')
                 return
             query.filter('className =', theClass).filter('hwName =', theHw).order('owner')
-            self.response.out.write('<h2><a href="/%s">%s</a>: %s : %s</h2>' % (className,className,hwName, theHw.title))
-            self.response.out.write('<h3>Due %s</h3>' % fixTimezone(theHw.dueDate))
+            templateValues['title'] = '%s: %s' % (className, hwName)
+            templateValues['className'] = className
+            templateValues['hwName'] = hwName
+            templateValues['hwTitle'] = theHw.title
+            templateValues['dueDate'] = fixTimezone(theHw.dueDate)
             if theClass.owner == user: #class owner, show all the uploads for this hw.
                 query.order('owner')
-                self.response.out.write('<table><thead><tr><th>User</th><th>Filename</th><th>Submit Time</th></tr></thead><tbody>')
                 lastStudent = ""
+                uploads = []
                 for up in query:
-                    currentStudent = up.owner.nickname() 
+                    currentStudent = up.owner.nickname()
+                    cleanedUp = cleanedUpload() 
                     if currentStudent == lastStudent:
                         student = ""
                     else:
                         student = currentStudent
+                    cleanedUp.student = student
+                    cleanedUp.owner = urllib.quote(up.owner.nickname())
+                    cleanedUp.fileName = urllib.quote(up.fileName)      
                     if up.date <= theHw.dueDate:
-                        self.response.out.write('<tr><td><a href="%s/%s">%s</a></td><td>%s</td><td>%s</td></tr>' %
-                                                (hwName, urllib.quote(up.owner.nickname()) , student, urllib.quote(up.fileName), fixTimezone(up.date)))
+                        cleanedUp.date = fixTimezone(up.date)
                     else:
-                        self.response.out.write('<tr><td><a href="%s/%s">%s</a></td><td>%s</td><td style="color:red">%s</td></tr>' %
-                                                (hwName, urllib.quote(up.owner.nickname()) , student, urllib.quote(up.fileName), fixTimezone(up.date)))
+                        cleanedUp.date = ('<span style="color:red">%s</span>' % fixTimezone(up.date))
                     lastStudent = currentStudent
-                self.response.out.write('</tbody></table>')
+                    uploads.append(cleanedUp)
+                templateValues['uploads'] = uploads
+                path = os.path.join(os.path.dirname(__file__), 'alluploads.html')
+                self.response.out.write(template.render(path, templateValues))
+                return
             else: #not owner of class so show only his uploads
                 query.filter('owner =', user)
-                self.response.out.write("""
-                <form enctype="multipart/form-data" method="post" action="/%s/%s">
-                <input type="file" name="file" />
-                <input type="submit" title="Upload another file." value="Upload"/>
-                </form>""" % (className, hwName))
-                self.response.out.write('<ul>')
+                uploads = []
                 for up in query:
-                    self.response.out.write("""<li>%s<br/><em>Submitted: %s</em><br/>
-                    <form action="/%s/%s/%s" method="post"><input type="submit" title="Delete this file." value="Delete"/>
-                    <input type="hidden" name="action" value="delete" /></form>
-                    <pre class="prettyprint linenums">%s</pre> 
-                    </li>""" % (up.fileName, fixTimezone(up.date), className, hwName, up.fileName, up.file))
-                self.response.out.write('</ul>')
+                    cleanedUp = cleanedUpload() 
+                    cleanedUp.owner = urllib.quote(up.owner.nickname())
+                    cleanedUp.fileName = urllib.quote(up.fileName)
+                    cleanedUp.file = up.file
+                    if up.date <= theHw.dueDate:
+                        cleanedUp.date = fixTimezone(up.date)
+                    else:
+                        cleanedUp.date = ('<span style="color:red">%s</span>' % fixTimezone(up.date))
+                    uploads.append(cleanedUp)
+                templateValues['uploads'] = uploads
+                path = os.path.join(os.path.dirname(__file__), 'myuploads.html')
+                self.response.out.write(template.render(path, templateValues))
+                return                  
         else: #/class/hw1/test@example.com
             className = pathList[1]
             theClass = getClassNamed(className)

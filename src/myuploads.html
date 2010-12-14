@@ -1,0 +1,21 @@
+{# /class/hw1/ page for when the user us the owner of the class #}
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h2><a href="/{{ className }}">{{ className }}</a>: {{ hwName }} : {{ hwTitle }}</h2>
+<h3>Due {{ dueDate }}</h3>
+
+<form enctype="multipart/form-data" method="post" action="/{{ className }}/{{ hwName }}">
+<input type="file" name="file" />
+<input type="submit" title="Upload another file." value="Upload"/>
+</form>
+<ul>
+{% for up in uploads %}
+<li>{{ up.fileName }}<br/><em>Submitted: {{ up.date }}</em><br/>
+<form action="/{{ className }}/{{ hwName }}/{{ up." method="post"><input type="submit" title="Delete this file." value="Delete"/>
+<input type="hidden" name="action" value="delete" /></form>
+<pre class="prettyprint linenums">{{ up.file }}</pre> 
+</li>
+{% endfor %}
+</ul>                
+{% endblock %}

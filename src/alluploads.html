@@ -1,0 +1,14 @@
+{# /class/hw1/ page for when the user us the owner of the class #}
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h2><a href="/{{ className }}">{{ className }}</a>: {{ hwName }} : {{ hwTitle }}</h2>
+<h3>Due {{ dueDate }}</h3>
+
+<table border="1"><thead><tr><th>User</th><th>Filename</th><th>Submit Time</th></tr></thead><tbody>
+{% for up in uploads %}
+<tr><td><a href="{{ hwName }}/{{ up.owner }}">{{ up.student }}</a></td><td>{{ up.fileName }}</td><td>{{ up.date }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}
