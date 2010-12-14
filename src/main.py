@@ -250,19 +250,25 @@ class MainPage(webapp.RequestHandler):
             studentNickname = urllib.unquote(pathList[3])
             query = Upload.all()
             theHw = getHwNamed(className, hwName)
-            if theHw == '' or theClass == '':
+            if theHw == '':
                 self.response.set_status(404)
                 self.redirect('/')
                 return
-            self.response.out.write('<h2><a href="/%s">%s</a>: <a href="/%s/%s">%s</a></h2>' % (className,className,className,hwName,hwName))
+            templateValues['className'] = className
+            templateValues['hwName'] = hwName
             query.filter('className =', theClass).filter('hwName =', theHw).filter('ownerNickname =',studentNickname)
-            self.response.out.write('<h2>%s</h2>' % studentNickname)
-            self.response.out.write('<ul>')
+            templateValues['studentNickname'] = studentNickname
+            uploads = []
             for up in query:
-                self.response.out.write('<li>%s<br/><em>Submitted: %s</em><br><pre class="prettyprint linenums">%s</pre></li>' %
-                                            (up.fileName, fixTimezone(up.date) , up.file))
-            self.response.out.write('</ul>')          
-        self.response.out.write('</body></html>')
+                cleanedUp = cleanedUpload()
+                cleanedUp.fileName = up.fileName
+                cleanedUp.date = fixTimezone(up.date)
+                cleanedUp.file = up.file
+                uploads.append(cleanedUp)
+            templateValues['uploads'] = uploads
+            path = os.path.join(os.path.dirname(__file__), 'studentuploads.html')
+            self.response.out.write(template.render(path, templateValues))
+            return
         
     def post(self):
         user = users.get_current_user()
