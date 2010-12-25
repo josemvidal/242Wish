@@ -1,5 +1,5 @@
-#turn it in webapp.
-# Jose M Vidal <jmvidal@gmail.com>
+# Jose M Vidal <jmvidal@gmail.com> 
+#turn it in webbapp.
 
 from google.appengine.api import users
 from google.appengine.ext import webapp 
@@ -154,6 +154,7 @@ class MainPage(webapp.RequestHandler):
         templateValues ={'userInfo' : userInfo}
         #if at / then show classes 
         pathList = re.split('/',self.request.path) # / => ['',''], /145 => ['','145'], /145/hw1 => ['','145','hw1']
+        #TODO: each then part should be a separate method
         if (self.request.path == '/'): #at /
             classes = Class.all() #TODO: should these two dbase calls be made just once? 
             classes.filter('owner !=', user)

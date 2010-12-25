@@ -4,5 +4,5 @@ $(document).ready(function() {
 	$('.deletebutton').click(function(){
 		$('.deletebutton').hide();
 		$('.deleteform').show();
-		})
+		});
  });

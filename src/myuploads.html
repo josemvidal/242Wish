@@ -12,7 +12,7 @@
 <ul>
 {% for up in uploads %}
 <li>{{ up.fileName }}<br/><em>Submitted: {{ up.date }}</em><br/>
-<form action="/{{ className }}/{{ hwName }}/{{ up." method="post"><input type="submit" title="Delete this file." value="Delete"/>
+<form action="/{{ className }}/{{ hwName }}/{{ up.fileName }}" method="post"><input type="submit" title="Delete this file." value="Delete"/>
 <input type="hidden" name="action" value="delete" /></form>
 <pre class="prettyprint linenums">{{ up.file }}</pre> 
 </li>

@@ -15,7 +15,7 @@
   {% endfor %} 
 </ul>
 {% if isClassTeacher %}
-<form action="/%s" method="post">
+<form action="/{{ className }}" method="post">
 <div>Homework Name: <input type="text" name="name" size="16" maxlength="16"></input><em> ex: 'hw1'. Name will be used in URL for this homework.</em></div>
 <div>Homework Title: <input type="text" name="title" size="32" maxlength="32"></input><em> ex: 'For-loops and While-loops'</em></div>
 <div>Due Date: <input type="text" name="date" id="date"/></div>
