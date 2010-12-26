@@ -1,6 +1,9 @@
 # Jose M Vidal <jmvidal@gmail.com> 
 #turn it in webbapp.
 
+#TODO: ajax delete of homeworks
+#TODO: 
+
 from google.appengine.api import users
 from google.appengine.ext import webapp 
 from google.appengine.ext import db 
@@ -12,7 +15,8 @@ import urllib
 import os
 from google.appengine.ext.webapp import template
 
-#the list of teachers are the only ones that can create classes and homeworks and see everyone's submissions and grade them
+#the list of teachers are the only ones that can create classes 
+# and homeworks and see everyone's submissions and grade them
 teachers = ['jmvidal@gmail.com']
 
 #The Database objects
@@ -140,7 +144,7 @@ Pacific  = USTimeZone(-8, "Pacific",  "PST", "PDT")
 def fixTimezone(d):
     """Returns string that represents this UTC date d in Eastern and looks pretty."""
     return d.replace(tzinfo=utc).astimezone(Eastern).strftime("%Y-%m-%d %I:%M:%S %p")
- 
+
 #Our one and only request handler    
 class MainPage(webapp.RequestHandler):
     def get(self):
@@ -149,7 +153,10 @@ class MainPage(webapp.RequestHandler):
         if user:
             userInfo = ('<b>%s</b> <a href="%s">logout</a>') % (user.nickname(), users.create_logout_url('/'))
         else:
-            self.response.out.write(('<html><body><p>You must <a href="%s">login</a> first.</p></body></html>') % (users.create_login_url(self.request.uri)))
+            templateValues = {'loginURL' : users.create_login_url(self.request.uri)}
+            templateValues['title'] = 'Turn It In'
+            path = os.path.join(os.path.dirname(__file__), 'login.html')            
+            self.response.out.write(template.render(path,templateValues))
             return
         templateValues ={'userInfo' : userInfo}
         #if at / then show classes 
@@ -157,10 +164,10 @@ class MainPage(webapp.RequestHandler):
         #TODO: each then part should be a separate method
         if (self.request.path == '/'): #at /
             classes = Class.all() #TODO: should these two dbase calls be made just once? 
-            classes.filter('owner !=', user)
-            templateValues['title'] = 'Turn It In'
+            classes.filter('owner !=', user) 
             templateValues['classes'] = classes
             myClasses = Class.all().filter('owner =', user)
+            templateValues['title'] = 'Turn It In'            
             templateValues['myClasses'] = myClasses
             templateValues['isTeacher'] = (user.email() in teachers)
             path = os.path.join(os.path.dirname(__file__), 'index.html')
