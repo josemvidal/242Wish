@@ -2,6 +2,17 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
+<script type="text/javascript">
+function deleteFile(path, filename, id){
+	alert('hi there');
+	$.ajax({type: "POST",
+		   url: path + filename,
+		   data: "action=delete",
+		   success: function(response){
+			   $("#" + id).hide();
+		   }});
+};
+</script>                
 <h2><a href="/{{ className }}">{{ className }}</a>: {{ hwName }} : {{ hwTitle }}</h2>
 <h3>Due {{ dueDate }}</h3>
 
@@ -11,11 +22,13 @@
 </form>
 <ul>
 {% for up in uploads %}
-<li>{{ up.fileName }}<br/><em>Submitted: {{ up.date }}</em><br/>
+<li id="{{ up.id }}">{{ up.fileName }}<br/><em>Submitted: {{ up.date }}</em><br/>
 <form action="/{{ className }}/{{ hwName }}/{{ up.fileName }}" method="post"><input type="submit" title="Delete this file." value="Delete"/>
 <input type="hidden" name="action" value="delete" /></form>
+<input type="button" onClick="deleteFile('/{{ className }}/{{ hwName }}/', '{{ up.fileName }}', '{{ up.id }}')" value="Delete It"></input>
+<input type="button" onClick="alert('hello')" value="hello"></input>
 <pre class="prettyprint linenums">{{ up.file }}</pre> 
 </li>
 {% endfor %}
-</ul>                
+</ul>
 {% endblock %}

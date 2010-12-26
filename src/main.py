@@ -43,6 +43,7 @@ class Upload(db.Model):
 class cleanedUpload:
     owner = ''
     fileName = ''
+    id = ''
     file = ''
     date = ''
     student = ''
@@ -210,6 +211,7 @@ class MainPage(webapp.RequestHandler):
                 query.order('owner')
                 lastStudent = ""
                 uploads = []
+                uploadNum = 1
                 for up in query:
                     currentStudent = up.owner.nickname()
                     cleanedUp = cleanedUpload() 
@@ -219,7 +221,9 @@ class MainPage(webapp.RequestHandler):
                         student = currentStudent
                     cleanedUp.student = student
                     cleanedUp.owner = urllib.quote(up.owner.nickname())
-                    cleanedUp.fileName = urllib.quote(up.fileName)      
+                    cleanedUp.fileName = urllib.quote(up.fileName)
+                    cleanedUp.id = "upload" + str(uploadNum)
+                    uploadNum = uploadNum + 1    
                     if up.date <= theHw.dueDate:
                         cleanedUp.date = fixTimezone(up.date)
                     else:
@@ -233,11 +237,14 @@ class MainPage(webapp.RequestHandler):
             else: #not owner of class so show only his uploads
                 query.filter('owner =', user)
                 uploads = []
+                uploadNum = 1
                 for up in query:
                     cleanedUp = cleanedUpload() 
                     cleanedUp.owner = urllib.quote(up.owner.nickname())
                     cleanedUp.fileName = urllib.quote(up.fileName)
                     cleanedUp.file = up.file
+                    cleanedUp.id = "upload" + str(uploadNum)
+                    uploadNum = uploadNum + 1                        
                     if up.date <= theHw.dueDate:
                         cleanedUp.date = fixTimezone(up.date)
                     else:
@@ -385,7 +392,8 @@ class MainPage(webapp.RequestHandler):
             query = Upload.all().filter('className =',theClass).filter('hwName =',theHw).filter('owner =', user).filter('fileName =', fileName)
             for up in query:
                 up.delete()
-            self.redirect('/%s/%s' % (className,hwName))
+            self.response.set_status(200)
+#            self.redirect('/%s/%s' % (className,hwName))
             return
             
 application = webapp.WSGIApplication( [('/.*', MainPage)], debug=True)
