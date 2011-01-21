@@ -1,7 +1,6 @@
 # Jose M Vidal <jmvidal@gmail.com> 
 #turn it in webbapp.
 
-#TODO: ajax delete of homeworks
 #TODO: 
 
 from google.appengine.api import users
@@ -271,7 +270,10 @@ class MainPage(webapp.RequestHandler):
                 return
             templateValues['className'] = className
             templateValues['hwName'] = hwName
-            query.filter('className =', theClass).filter('hwName =', theHw).filter('ownerNickname =',studentNickname)
+            #TODO: change to 'owner ='
+            #query.filter('className =', theClass).filter('hwName =', theHw).filter('ownerNickname =',studentNickname)
+            owner = users.User(studentNickname)
+            query.filter('className =', theClass).filter('hwName =', theHw).filter('owner =',owner)
             templateValues['studentNickname'] = studentNickname
             uploads = []
             for up in query:
@@ -332,7 +334,9 @@ class MainPage(webapp.RequestHandler):
             newup.owner = user
             newup.ownerNickname = user.nickname()
             file = self.request.get('file')
-            newup.fileName = self.request.POST[u'file'].filename
+            #TODO: AttributeError: 'unicode' object has no attribute 'filename'. Filename was empty. rfboykin
+            #maybe this happens when a student submits the same filename twice?          
+            newup.fileName = self.request.POST[u'file'].filename 
             newup.file = db.Blob(file)
             newup.put()
             self.redirect('/%s/%s' % (className, hwName))
@@ -373,7 +377,7 @@ class MainPage(webapp.RequestHandler):
             self.redirect('/')
             return
         if len(pathList) == 3: #/class/hw, delete this homework an its uploads
-            if theClass.ownser != user:
+            if theClass.owner != user:
                 self.response.set_status(403) #forbidden
                 self.redirect('/%s' % className)
                 return
