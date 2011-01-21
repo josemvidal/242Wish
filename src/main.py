@@ -219,7 +219,10 @@ class MainPage(webapp.RequestHandler):
                     else:
                         student = currentStudent
                     cleanedUp.student = student
-                    cleanedUp.owner = urllib.quote(up.owner.nickname())
+                    email = up.owner.nickname()
+                    if not '@' in email:
+                        email = email + '@gmail.com'
+                    cleanedUp.owner = urllib.quote(email)
                     cleanedUp.fileName = urllib.quote(up.fileName)
                     cleanedUp.id = "upload" + str(uploadNum)
                     uploadNum = uploadNum + 1    
