@@ -65,6 +65,10 @@ def getHwNamed(className, hwName):
         return ''
     return query.fetch(1)[0]
 
+def cleanFile(contents):
+    cleanFile = contents.replace('<','&lt;')
+    return re.sub('(http://[a-zA-Z0-9\.]*)', '<a href="\\1">\\1</a>', cleanFile)
+
 # A complete implementation of current DST rules for major US time zones.
 ZERO = timedelta(0)
 HOUR = timedelta(hours=1)
@@ -244,7 +248,7 @@ class MainPage(webapp.RequestHandler):
                     cleanedUp = cleanedUpload() 
                     cleanedUp.owner = urllib.quote(up.owner.nickname())
                     cleanedUp.fileName = urllib.quote(up.fileName)
-                    cleanedUp.file = up.file
+                    cleanedUp.file = cleanFile(up.file)
                     cleanedUp.id = "upload" + str(uploadNum)
                     uploadNum = uploadNum + 1                        
                     if up.date <= theHw.dueDate:
@@ -273,8 +277,6 @@ class MainPage(webapp.RequestHandler):
                 return
             templateValues['className'] = className
             templateValues['hwName'] = hwName
-            #TODO: change to 'owner ='
-            #query.filter('className =', theClass).filter('hwName =', theHw).filter('ownerNickname =',studentNickname)
             owner = users.User(studentNickname)
             query.filter('className =', theClass).filter('hwName =', theHw).filter('owner =',owner)
             templateValues['studentNickname'] = studentNickname
@@ -283,7 +285,7 @@ class MainPage(webapp.RequestHandler):
                 cleanedUp = cleanedUpload()
                 cleanedUp.fileName = up.fileName
                 cleanedUp.date = fixTimezone(up.date)
-                cleanedUp.file = up.file
+                cleanedUp.file = cleanFile(up.file)
                 uploads.append(cleanedUp)
             templateValues['uploads'] = uploads
             path = os.path.join(os.path.dirname(__file__), 'studentuploads.html')
