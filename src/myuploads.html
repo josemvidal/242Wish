@@ -24,7 +24,7 @@ function deleteFile(path, id){
 <li id="{{ up.id }}">{{ up.fileName }}<br/><em>Submitted: {{ up.date }}</em><br/>
 <input type="button" onClick="deleteFile('/{{ className }}/{{ hwName }}/{{ up.fileName }}', 
 		'{{ up.id }}')" value="Delete"></input>
-<pre class="prettyprint linenums">{{ up.file }}</pre> 
+<pre class="prettyprint linenums">{{ up.file|escape|urlize }}</pre> 
 </li>
 {% endfor %}
 </ul>

@@ -6,7 +6,7 @@
 <h2>{{ studentNickname }}</h2>
 <ul>
 {% for up in uploads %}
-<li>{{ up.fileName }}<br/><em>Submitted: {{ up.date }}</em><br><pre class="prettyprint linenums">{{ up.file }}</pre></li>
+<li>{{ up.fileName }}<br/><em>Submitted: {{ up.date }}</em><br><pre class="prettyprint linenums">{{ up.file|escape|urlize }}</pre></li>
 {% endfor %}
 </ul>
 {% endblock %}
