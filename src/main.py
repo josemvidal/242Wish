@@ -189,7 +189,7 @@ class MainPage(webapp.RequestHandler):
                 self.redirect('/')
                 return
             theClass = query.fetch(1)[0]
-            homeworks = Homework.all().filter('className =', theClass)
+            homeworks = Homework.all().filter('className =', theClass).order('dueDate')
             templateValues['title'] = className
             templateValues['className'] = className
             templateValues['homeworks'] = homeworks
