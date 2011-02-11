@@ -6,7 +6,7 @@
 <h2>{{ studentNickname }}</h2>
 <ul>
 {% for up in uploads %}
-<li>{{ up.fileName }}
+<li><a href="/{{ className }}/{{ hwName }}/{{ studentNickname }}/{{ up.fileName }}">{{ up.fileName }}</a>
 {% if up.teacher %}
 <form style="display:inline" method="post" action="/{{ className }}/{{ hwName }}/{{ studentNickname }}">
 <input type="hidden" name="fileName" value="{{ up.fileName }}"/>

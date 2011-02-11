@@ -263,7 +263,7 @@ class MainPage(webapp.RequestHandler):
                 path = os.path.join(os.path.dirname(__file__), 'myuploads.html')
                 self.response.out.write(template.render(path, templateValues))
                 return                  
-        else: #/class/hw1/test@example.com: if class owner show all uploads, else show only isPublic uploads
+        elif len(pathList) == 4: #/class/hw1/test@example.com: if class owner show all uploads, else show only isPublic uploads
             className = pathList[1]
             theClass = getClassNamed(className)
             hwName = pathList[2]
@@ -299,6 +299,29 @@ class MainPage(webapp.RequestHandler):
                 return
             path = os.path.join(os.path.dirname(__file__), 'studentuploads.html')
             self.response.out.write(template.render(path, templateValues))
+            return
+        elif (len(pathList) == 5): #/class/hw/user@home.com/Circle.java, can only download if isPublic o
+            className = pathList[1]
+            theClass = getClassNamed(className)
+            hwName = pathList[2]
+            studentNickname = urllib.unquote(pathList[3])
+            owner = users.User(studentNickname)            
+            fileName = urllib.unquote(pathList[4])
+            theHw = getHwNamed(className, hwName)
+            if theHw == '':
+                self.response.set_status(404)
+                self.redirect('/')
+                return
+            query = Upload.all()
+            query.filter('className =', theClass).filter('hwName =', theHw).filter('owner =',owner).filter('fileName =',fileName)
+            up = query.get() #should be just one
+            if theClass.owner == user or up.isPublic:
+                self.response.headers['Content-Type'] = 'application/octet-stream'
+                self.response.headers['Content-Disposition'] = 'attachment;filename="%s"' % up.fileName
+                self.response.out.write(up.file)
+                return
+            self.response.set_status(403) #forbidden. cannot see submitted homeworks unless you are the class.owner or they are public
+            self.redirect('/%s/%s' % (className, hwName))
             return
         
     def post(self):
