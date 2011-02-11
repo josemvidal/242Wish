@@ -6,7 +6,21 @@
 <h2>{{ studentNickname }}</h2>
 <ul>
 {% for up in uploads %}
-<li>{{ up.fileName }}<br/><em>Submitted: {{ up.date }}</em><br><pre class="prettyprint linenums">{{ up.file|escape|urlize }}</pre></li>
+<li>{{ up.fileName }}
+{% if up.teacher %}
+<form style="display:inline" method="post" action="/{{ className }}/{{ hwName }}/{{ studentNickname }}">
+<input type="hidden" name="fileName" value="{{ up.fileName }}"/>
+{% if up.isPublic %}
+<input type="hidden" name="action" value="unpublish"/>
+<input type="submit" title="" value="Make Private"/>
+{% else %}
+<input type="hidden" name="action" value="publish"/>
+<input type="submit" title="" value="Make Public"/>
+{% endif %}
+</form>
+{% endif %}
+<br/>
+<em>Submitted: {{ up.date }}</em><br/><pre class="prettyprint linenums">{{ up.file|escape|urlize }}</pre></li>
 {% endfor %}
 </ul>
 {% endblock %}

@@ -1,7 +1,7 @@
 # Jose M Vidal <jmvidal@gmail.com> 
 #turn it in webbapp.
 
-#TODO: 
+#TODO: mark Upload as public which makes the URL viewable by all (but they can't delete/add to it).
 
 from google.appengine.api import users
 from google.appengine.ext import webapp 
@@ -13,6 +13,8 @@ from datetime import tzinfo, timedelta, datetime #@UnresolvedImport
 import urllib 
 import os
 from google.appengine.ext.webapp import template
+
+import logging
 
 #the list of teachers are the only ones that can create classes 
 # and homeworks and see everyone's submissions and grade them
@@ -37,6 +39,7 @@ class Upload(db.Model):
     date = db.DateTimeProperty() #time of submission
     file = db.BlobProperty() # the file
     fileName = db.StringProperty()
+    isPublic = db.BooleanProperty() #public means world-readable. only a teacher can make a solution public
 
 #used for passing to the templates
 class cleanedUpload:
@@ -46,6 +49,7 @@ class cleanedUpload:
     file = ''
     date = ''
     student = ''
+    teacher = False
     
 #Database utility functions    
 def getClassNamed(name):
@@ -259,16 +263,11 @@ class MainPage(webapp.RequestHandler):
                 path = os.path.join(os.path.dirname(__file__), 'myuploads.html')
                 self.response.out.write(template.render(path, templateValues))
                 return                  
-        else: #/class/hw1/test@example.com
+        else: #/class/hw1/test@example.com: if class owner show all uploads, else show only isPublic uploads
             className = pathList[1]
             theClass = getClassNamed(className)
-            if theClass == '' or theClass.owner != user:
-                self.response.set_status(403) #forbidden. cannot see submitted homeworks unless you are the class.owner
-                self.redirect('/%s' % className)
-                return
             hwName = pathList[2]
             studentNickname = urllib.unquote(pathList[3])
-            query = Upload.all()
             theHw = getHwNamed(className, hwName)
             if theHw == '':
                 self.response.set_status(404)
@@ -277,6 +276,7 @@ class MainPage(webapp.RequestHandler):
             templateValues['className'] = className
             templateValues['hwName'] = hwName
             owner = users.User(studentNickname)
+            query = Upload.all()
             query.filter('className =', theClass).filter('hwName =', theHw).filter('owner =',owner)
             templateValues['studentNickname'] = studentNickname
             uploads = []
@@ -285,8 +285,18 @@ class MainPage(webapp.RequestHandler):
                 cleanedUp.fileName = up.fileName
                 cleanedUp.date = fixTimezone(up.date)
                 cleanedUp.file = up.file
-                uploads.append(cleanedUp)
+                cleanedUp.isPublic = up.isPublic
+                if theClass.owner == user:
+                    cleanedUp.teacher = True
+                else:
+                    cleanedUp.teacher = False
+                if theClass.owner == user or up.isPublic: #either the user owns the class it or it is public
+                    uploads.append(cleanedUp)
             templateValues['uploads'] = uploads
+            if len(uploads) == 0:
+                self.response.set_status(403) #forbidden. cannot see submitted homeworks unless you are the class.owner or they are public
+                self.redirect('/%s/%s' % (className, hwName))
+                return
             path = os.path.join(os.path.dirname(__file__), 'studentuploads.html')
             self.response.out.write(template.render(path, templateValues))
             return
@@ -331,7 +341,7 @@ class MainPage(webapp.RequestHandler):
             hwName = pathList[2]
             theClass = getClassNamed(className)
             theHw = getHwNamed(className, hwName)
-            newup = Upload()
+            newup = Upload(isPublic=False)
             newup.className = theClass
             newup.hwName = theHw
             newup.date = datetime.now(Eastern)
@@ -344,6 +354,34 @@ class MainPage(webapp.RequestHandler):
             newup.file = db.Blob(file)
             newup.put()
             self.redirect('/%s/%s' % (className, hwName))
+            return
+        elif (len(pathList) == 4): #/class/hw/user@home.com request to make an upload public
+            className = pathList[1]
+            theClass = getClassNamed(className)
+            hwName = pathList[2]
+            theHw = getHwNamed(className, hwName)
+            if theClass == '' or theClass.owner != user:
+                self.response.set_status(403) #forbidden
+                self.redirect('/')
+                return
+            action = self.request.get('action')
+            if action != 'publish' and action != 'unpublish':
+                self.redirect('/')
+                return
+            owner = pathList[3]
+            fileName = self.request.get('fileName')
+            query = Upload.all().filter('className =', theClass).filter('hwName =', theHw).filter('fileName =',fileName) #get all the uploads
+            logging.info('Handling POST')
+            logging.info('theClass=%s' % theClass)
+            logging.info('theHw=%s' % theHw)
+            for up in query: #should be just one, unless he uploads the same filename multiple times
+                if action == 'publish':
+                    up.isPublic = True
+                elif action == 'unpublish':
+                    up.isPublic = False
+                logging.info('Found one.')
+                up.put()
+            self.redirect('/%s/%s/%s' % (className, hwName, owner))
             return
         self.response.out.write('<html><body>You wrote:<pre>')
         self.response.out.write(self.request.get('name'))
