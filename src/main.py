@@ -1,7 +1,7 @@
 # Jose M Vidal <jmvidal@gmail.com> 
 #turn it in webbapp.
 
-#TODO: mark Upload as public which makes the URL viewable by all (but they can't delete/add to it).
+#TODO:set lang-x on class prettyprint based on file extension (.html = lang-html) 
 
 from google.appengine.api import users
 from google.appengine.ext import webapp 
