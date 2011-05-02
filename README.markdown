@@ -1,4 +1,5 @@
-A Google App Engine web application for handling the submission of code files in a classroom setting.
+A Google App Engine web application for handling the submission of code files in a classroom setting. 
+It is currently published at [i-am-done.appspot.com](http://i-am-done.appspot.com).
 
 The basic workflow is as follows:
 
